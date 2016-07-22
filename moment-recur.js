@@ -82,6 +82,7 @@
     var Calendar = (function (){
         // Dictionary of unit types based on measures
         var unitTypes = {
+            "hoursOfDay": "hour",
             "daysOfMonth": "date",
             "daysOfWeek": "day",
             "weeksOfMonth": "monthWeek",
@@ -92,6 +93,7 @@
 
         // Dictionary of ranges based on measures
         var ranges = {
+            "hoursOfDay"        : { low: 0, high: 23 },
             "daysOfMonth"       : { low: 1, high: 31 },
             "daysOfWeek"        : { low: 0, high: 6 },
             "weeksOfMonth"      : { low: 0, high: 4 },
@@ -195,6 +197,7 @@
             "weeks": "interval",
             "months": "interval",
             "years": "interval",
+            "hoursOfDay": "calendar",
             "daysOfWeek": "calendar",
             "daysOfMonth": "calendar",
             "weeksOfMonth": "calendar",
@@ -209,6 +212,7 @@
             "weeks": "week",
             "months": "month",
             "years": "year",
+            "hoursOfDay": "hourOfDay",
             "daysOfWeek": "dayOfWeek",
             "daysOfMonth": "dayOfMonth",
             "weeksOfMonth": "weekOfMonth",
@@ -390,6 +394,9 @@
                 case "year":
                     return "years";
 
+                case "hourOfDay":
+                    return "hoursOfDay";
+
                 case "dayOfWeek":
                     return "daysOfWeek";
 
@@ -413,16 +420,17 @@
             }
         }
 
-        // Private funtion to see if all rules match
+        // Private function to see if all rules match
         function matchAllRules(rules, date, start) {
             var i, len, rule, type;
+            var dateOnly = date.dateOnly();
 
             for (i = 0, len = rules.length; i < len; i++) {
                 rule = rules[i];
                 type = ruleTypes[rule.measure];
 
                 if (type === "interval") {
-                    if (!Interval.match(rule.measure, rule.units, start, date)) {
+                    if (!Interval.match(rule.measure, rule.units, start, dateOnly)) {
                         return false;
                     }
                 } else if (type === "calendar") {
@@ -618,17 +626,24 @@
 
         // Attempts to match a date to the rules
         Recur.prototype.matches = function(dateToMatch, ignoreStartEnd) {
-            var date = moment(dateToMatch).dateOnly();
+            var date = moment(dateToMatch);
+            var dateOnly = date.dateOnly();
 
             if (!date.isValid()) {
                 throw Error("Invalid date supplied to match method: " + dateToMatch);
             }
 
-            if (!ignoreStartEnd && !inRange(this.start, this.end, date)) { return false }
+            if (!ignoreStartEnd && !inRange(this.start, this.end, dateOnly)) {
+              return false;
+            }
 
-            if (isException(this.exceptions, date)) { return false; }
+            if (isException(this.exceptions, dateOnly)) {
+              return false;
+            }
 
-            if (!matchAllRules(this.rules, date, this.start)) { return false; }
+            if (!matchAllRules(this.rules, date, this.start)) {
+              return false;
+            }
 
             // if we passed everything above, then this date matches
             return true;
