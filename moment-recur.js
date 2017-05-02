@@ -282,6 +282,7 @@
         function getOccurrences(num, format, type) {
             var currentDate, date;
             var dates = [];
+            var inc;
 
             if (!(this instanceof Recur)) {
                 throw Error("Private method trigger() was called directly or not called as instance of Recur!");
@@ -315,23 +316,24 @@
                 }
             }
 
+            inc = isHourly(this.rules) ? "hour" : "day";
+
             // Get the next N dates, if num is null then infinite
             while (dates.length < (num===null ? dates.length+1 : num)) {
                 if (type === "next" || type === "all") {
-                    currentDate.add(1, "day");
+                    currentDate.add(1, inc);
                 } else {
-                    currentDate.subtract(1, "day");
+                    currentDate.subtract(1, inc);
                 }
 
-                //console.log("Match: " + currentDate.format("L") + " - " + this.matches(currentDate, true));
+                if (this.end && currentDate.dateOnly().isAfter(this.end)) {
+                    break;
+                }
 
                 // Don't match outside the date if generating all dates within start/end
                 if (this.matches(currentDate, (type==="all"?false:true))) {
                     date = format ? currentDate.format(format) : currentDate.clone();
                     dates.push(date);
-                }
-                if(type === "all" && currentDate >= this.end) {
-                    break;
                 }
             }
 
@@ -377,6 +379,12 @@
                 }
             }
             return false;
+        }
+
+        function isHourly(rules) {
+            return rules.some(function (rule) {
+                return rule.measure === "hoursOfDay"
+            });
         }
 
         // Private function to pluralize measure names for use with dictionaries.
@@ -528,7 +536,11 @@
             }
 
             if (date) {
-                this.from = moment(date).dateOnly();
+                if (isHourly(this.rules)) {
+                    this.from = moment(date).hourOnly();
+                } else {
+                    this.from = moment(date).dateOnly();
+                }
                 return this;
             }
 
@@ -758,10 +770,18 @@
 
     // Plugin for removing all time information from a given date
     moment.fn.dateOnly = function() {
-        if (this.tz && typeof(moment.tz) == 'function') {
+        if (typeof(this.tz) === 'function' && typeof(moment.tz) === 'function') {
             return moment.tz(this.format('YYYY-MM-DD'), 'UTC');
         } else {
-            return this.hours(0).minutes(0).seconds(0).milliseconds(0).add(this.utcOffset(), "minute").utcOffset(0);
+            return this.clone().hours(0).minutes(0).seconds(0).milliseconds(0).add(this.utcOffset(), "minute").utcOffset(0);
+        }
+    };
+
+    moment.fn.hourOnly = function() {
+        if (typeof(this.tz) === 'function' && typeof(moment.tz) === 'function') {
+            return moment.tz(this.format('YYYY-MM-DDTHH:00:00.000'), 'UTC');
+        } else {
+            return this.clone().minutes(0).seconds(0).milliseconds(0).add(this.utcOffset(), "minute").utcOffset(0);
         }
     };
 
