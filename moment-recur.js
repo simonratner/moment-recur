@@ -679,6 +679,10 @@
             return getOccurrences.call(this, null, format, "all");
         };
 
+        Recur.prototype.isHourly = function() {
+            return isHourly(this.rules);
+        };
+
         // Create the measure functions (days(), months(), daysOfMonth(), monthsOfYear(), etc.)
         for (var measure in measures) {
             if (ruleTypes.hasOwnProperty(measure)) {
