@@ -329,6 +329,9 @@
                 if (this.end && currentDate.dateOnly().isAfter(this.end)) {
                     break;
                 }
+                if (this.start && currentDate.dateOnly().isBefore(this.start)) {
+                    break;
+                }
 
                 // Don't match outside the date if generating all dates within start/end
                 if (this.matches(currentDate, (type==="all"?false:true))) {
