@@ -327,9 +327,17 @@
                 }
 
                 if (this.end && currentDate.dateOnly().isAfter(this.end)) {
+                    // Keep going until we find a date in range
+                    if (type === "previous") {
+                        continue;
+                    }
                     break;
                 }
                 if (this.start && currentDate.dateOnly().isBefore(this.start)) {
+                    // Keep going until we find a date in range
+                    if (type === "next") {
+                        continue;
+                    }
                     break;
                 }
 
